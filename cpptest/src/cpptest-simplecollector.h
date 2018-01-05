@@ -142,7 +142,7 @@ namespace Test
 		std::list<BaseMessage*>::iterator current_suit;
 		std::list<BaseMessage*>::iterator current_test;
 		bool errors_;
-    bool assert_on_assertment_;
+		bool assert_on_assertment_;
 	public:
 		enum Mode
 		{
