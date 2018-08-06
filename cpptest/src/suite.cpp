@@ -178,7 +178,7 @@ namespace Test
 			{
 				(_suite.*data._func)();
 			} catch (...) {
-				_suite._result = _suite._success = false;
+				_suite.assertment(::Test::Source("", 0, "exception thrown"));
 			}
 			Time end(Time::current());
 			_suite.tear_down();
