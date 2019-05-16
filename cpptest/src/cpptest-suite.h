@@ -54,8 +54,11 @@ namespace Test
 	public:	
 		Suite();
 		virtual ~Suite();
-		
-		void add(std::auto_ptr<Suite> suite);
+
+        void add(std::unique_ptr<Suite> suite);
+
+        //Prefer using add with unique_ptr. This method is going to be removed in c++ 17.
+        void add(std::auto_ptr<Suite> suite);
 		
 		bool run(Output& output, bool cont_after_fail = true);
 		
