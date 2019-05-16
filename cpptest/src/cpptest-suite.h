@@ -54,7 +54,10 @@ namespace Test
 	public:	
 		Suite();
 		virtual ~Suite();
-		
+
+		void add(std::unique_ptr<Suite> suite);
+
+		//Prefer using add with unique_ptr. This method is going to be removed in c++ 17.
 		void add(std::auto_ptr<Suite> suite);
 		
 		bool run(Output& output, bool cont_after_fail = true);
@@ -99,7 +102,7 @@ namespace Test
 		
 		std::string			_name;			// Suite name
 		const std::string*	_cur_test;		// Current test func name
-        Suites				_suites;		// External test suites
+		Suites				_suites;		// External test suites
 		Tests 				_tests;			// All tests
 		Output*				_output;		// Output handler
 		bool				_result   : 1;	// Test result
