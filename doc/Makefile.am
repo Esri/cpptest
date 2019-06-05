@@ -1,6 +1,6 @@
 ## ---
 ##
-## $Id: Makefile.am,v 1.10 2008/07/15 20:33:31 hartwork Exp $
+## $Id: Makefile.am,v 1.8 2005/06/28 12:10:45 nilu Exp $
 ##
 ## CppTest - A C++ Unit Testing Framework
 ## Copyright (c) 2003 Niklas Lundell
@@ -24,53 +24,45 @@
 ##
 ## ---
 
-SUBDIRS = src test
-if DOC
-SUBDIRS += doc
-endif
-
-####### Distribution
+doc_input = \
+	main.dox \
+	test.dox \
+	tutorial.dox
 
 EXTRA_DIST = \
-	autogen.sh \
-	BUGS \
-	config/stamp-h.in \
-	INSTALL.quick \
-	libcpptest.pc \
-	README \
-	win/winconfig.h \
-	win/VisualStudio.NET/VisualStudio.NET.sln \
-	win/VisualStudio.NET/cpptest/cpptest.vcproj \
-	win/VisualStudio.NET/test/test.vcproj
+	$(doc_input) \
+	Doxyfile \
+	images/html-example.html \
+	images/screenshot-compiler.png \
+	images/screenshot-text-terse.png \
+	images/screenshot-text-verbose.png
 
-####### Clean
+html_DATA= 	html/index.html
+
+IMAGES=		images/*.html images/*.png
+
+all:
+	doxygen
+	cp -p $(IMAGES) html/
+
+html/index.html:
+
+install-data-hook:
+	cp -p $(IMAGES) $(DESTDIR)$(htmldir)
+
+uninstall-local:
+	rm -rf $(DESTDIR)$(htmldir)
 
 MOSTLYCLEANFILES =
 
-CLEANFILES =
+CLEANFILES = \
+	html/*
 
 DISTCLEANFILES = \
-	config/config.h \
-	config/stamp-h? \
-	INSTALL.quick \
-	libcpptest.pc \
-	README \
-	Makefile
+	Doxyfile \
+	Makefile \
+	html/*
 	
 MAINTAINERCLEANFILES = \
-	aclocal.m4 \
-	autom4te-*.cache/* \
-	config.h \
-	configure \
-	config/config.guess \
-	config/config.sub \
-	config/depcomp \
-	config/install-sh \
-	config/ltmain.sh \
-	config/missing \
-	config/mkinstalldirs \
 	Makefile.in
-
-pkgconfigdir   = $(libdir)/pkgconfig
-pkgconfig_DATA = libcpptest.pc
 

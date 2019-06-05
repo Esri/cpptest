@@ -1,5 +1,12 @@
+Release 2.0.0 -- January 5 2019
+-------------------------------
+- Move to C++11 (GitHub issue #9):
+  - Replace deprecated auto_ptr by unique_ptr
+  - Remove deprecated dynamic exception specification (e.g. "throw ()")
+- Note: soname bumped to 1:8:0
+
 Release 1.1.2 -- Octobre 4 2012
-------------------------------
+-------------------------------
 - Fixed: Use @libdir@ for generation of libcpptest.pc (#3566605)
     Thanks for the patch to Dagobert Michelsen.
 - Fixed: Respect --htmldir
@@ -68,6 +75,6 @@ Release 1.0.1 -- February 5 2004
   from Parasoft, which apparently have an own product called C++Test.
 
 Release 1.0.0 -- Maj 13 2003
----------------------------
+----------------------------
 - Initial public release.
 
