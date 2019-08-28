@@ -142,8 +142,8 @@ private:
 	}
 
 	void func() {}
-	void func_no_throw() throw() {}
-	void func_throw_int() throw(int) { throw 13; }
+	void func_no_throw() {}
+	void func_throw_int() { throw 13; }
 };
 
 enum OutputType
@@ -166,7 +166,7 @@ usage()
 	exit(0);
 }
 
-static auto_ptr<Test::Output>
+static unique_ptr<Test::Output>
 cmdline(int argc, char* argv[])
 {
 	if (argc > 2)
@@ -194,7 +194,7 @@ cmdline(int argc, char* argv[])
 		}
 	}
 
-	return auto_ptr<Test::Output>(output);
+	return unique_ptr<Test::Output>(output);
 }
 
 // Main test program
@@ -208,20 +208,19 @@ main(int argc, char* argv[])
 		// Demonstrates the ability to use multiple test suites
 		//
 		Test::Suite ts;
-		ts.add(auto_ptr<Test::Suite>(new FailTestSuite));
-		ts.add(auto_ptr<Test::Suite>(new CompareTestSuite));
-		ts.add(auto_ptr<Test::Suite>(new ThrowTestSuite));
+		ts.add(unique_ptr<Test::Suite>(new FailTestSuite));
+		ts.add(unique_ptr<Test::Suite>(new CompareTestSuite));
+		ts.add(unique_ptr<Test::Suite>(new ThrowTestSuite));
 		/*
 		// Run the tests
 		//
-		auto_ptr<Test::Output> output(cmdline(argc, argv));
+		unique_ptr<Test::Output> output(cmdline(argc, argv));
 		ts.run(*output, true);
 
 		Test::HtmlOutput* const html = dynamic_cast<Test::HtmlOutput*>(output.get());
 		if (html)
 			html->generate(cout, true, "MyTest");
 			*/
-
 
 		bool doConsole = true;//output to console
 		bool doHtml = true;//generate html
