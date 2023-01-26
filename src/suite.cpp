@@ -184,16 +184,24 @@ namespace Test
 			_suite.setup();
 			Time start(Time::current());
 
+			std::string exception_string;
 			bool exception_caught = false;
 			try
 			{
 				(_suite.*data._func)();
-			} catch (...) {
+			}
+			catch (const std::exception& ex) {
 				exception_caught = true;
+				exception_string = "uncaught std::exception: ";
+				exception_string += ex.what();
+			}
+			catch (...) {
+				exception_caught = true;
+				exception_string = "uncaught exception thrown";
 			}
 
 			if (exception_caught) {
-				_suite.assertment(::Test::Source("", 0, "uncaught exception thrown"));
+				_suite.assertment(::Test::Source("", 0, exception_string.c_str()));
 			}
 
 			Time end(Time::current());
