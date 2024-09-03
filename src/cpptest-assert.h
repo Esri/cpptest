@@ -129,6 +129,7 @@
 /// \see TEST_ASSERT_EQUALS_OBJ(expected, got)
 ///
 /// For a description of all asserts, see \ref asserts.
+/// \see asserts
 ///
 #define TEST_ASSERT_EQUALS(expected, got)								\
 	{																	\
