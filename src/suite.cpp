@@ -245,7 +245,8 @@ namespace Test
 		}
 
 		if (exception_caught) {
-			ExecTests(*this)(Data(&Suite::suite_fail, "Suite Setup/Teardown"));
+			Data data(&Suite::suite_fail, "Suite Setup/Teardown");
+			ExecTests(*this)(data);
 		}
 
 		_output->suite_end(_tests.size(), _name, total_time(false));
