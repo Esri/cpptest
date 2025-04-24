@@ -32,6 +32,7 @@
 #include <list>
 #include <memory>
 #include <string>
+#include <mutex>
 
 #include "cpptest-time.h"
 #include "cpptest-source.h"
@@ -107,7 +108,8 @@ namespace Test
 		
 		typedef std::list<Data> 	Tests;
 		typedef std::list<Suite*> 	Suites;
-		
+
+		std::mutex			_mutex; // Mutex for thread safety of assertment
 		std::string			_name;			// Suite name
 		const std::string*	_cur_test;		// Current test func name
 		Suites				_suites;		// External test suites

@@ -51,7 +51,8 @@ namespace Test
 	///
 	CollectorOutput::CollectorOutput()
 	:	Output(),
-		_total_errors(0)
+		_total_errors(0),
+		_total_tests(0)
 	{}
 	
 	void
@@ -100,6 +101,7 @@ namespace Test
 	CollectorOutput::assertment(const Source& s)
 	{
 		_cur_test->_sources.push_back(s);
+
 	}
 	
 } // namespace Test
