@@ -151,6 +151,7 @@ namespace Test
 	void
 	Suite::assertment(Source s)
 	{
+		std::lock_guard<std::mutex> auto_lock(_mutex);
 		s._suite = _name;
 		if (_cur_test)
 			s._test  = *_cur_test;
