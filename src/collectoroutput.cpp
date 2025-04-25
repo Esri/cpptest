@@ -101,7 +101,6 @@ namespace Test
 	CollectorOutput::assertment(const Source& s)
 	{
 		_cur_test->_sources.push_back(s);
-
 	}
 	
 } // namespace Test

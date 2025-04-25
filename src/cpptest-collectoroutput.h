@@ -32,7 +32,6 @@
 #include <list>
 #include <string>
 #include <vector>
-#include <mutex>
 
 #include "cpptest-output.h"
 #include "cpptest-source.h"
