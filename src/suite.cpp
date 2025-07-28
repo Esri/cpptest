@@ -58,8 +58,6 @@ namespace Test
 		}
 		
 	} // anonymous namespace
-
-	thread_local std::stringstream Suite::tmpstream;
 	
 	/// Constructs an empty test suite.
 	///
