@@ -83,7 +83,9 @@ namespace Test
 
 		void register_test(Func func, const std::string& name);
 		void assertment(Source s);
-		
+
+		thread_local static std::stringstream	tmpstream;
+
 	private:
 		struct DoRun;
 		struct ExecTests;

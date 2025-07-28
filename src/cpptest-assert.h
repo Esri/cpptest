@@ -135,11 +135,12 @@
 	{																	\
 		if (!((got) == (expected)))										\
 		{																\
-			std::stringstream tmpstream;								\
 			tmpstream.precision(17);	\
 			tmpstream << "Got " << (got) << ", expected " << (expected);\
 			assertment(::Test::Source(__FILE__, __LINE__,				\
-						tmpstream.str().c_str()));						\
+						tmpstream.view().data()));						\
+			tmpstream.str("");	\
+			tmpstream.clear();	\
 			if (!continue_after_failure()) return;						\
 		}																\
 	}
@@ -165,11 +166,12 @@
 	{																\
 		if (!((got) == (expected)))									\
 		{															\
-			std::stringstream tmpstream;							\
 			tmpstream << #expected << " object not equal to ";		\
 			tmpstream << #got << " object.";						\
 			assertment(::Test::Source(__FILE__, __LINE__, 			\
-						tmpstream.str().c_str()));					\
+						tmpstream.view().data()));					\
+			tmpstream.str("");	\
+			tmpstream.clear();	\
 			if (!continue_after_failure()) return;					\
 		}															\
 	}
@@ -193,12 +195,13 @@
 	{																	\
 		if (!((got) == (expected)))										\
 		{																\
-			std::stringstream tmpstream;								\
 			tmpstream.precision(17);	\
 			tmpstream << (msg) << ": ";									\
 			tmpstream << "Got " << (got) << ", expected " << (expected);\
 			assertment(::Test::Source(__FILE__, __LINE__,				\
-						tmpstream.str().c_str()));						\
+						tmpstream.view().data()));						\
+			tmpstream.str("");	\
+			tmpstream.clear();	\
 			if (!continue_after_failure()) return;						\
 		}																\
 	}

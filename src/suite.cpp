@@ -39,6 +39,7 @@
 #include "cpptest-output.h"
 #include "cpptest-source.h"
 #include "cpptest-suite.h"
+#include "cpptest-assert.h"
 
 using namespace std;
 
@@ -57,6 +58,8 @@ namespace Test
 		}
 		
 	} // anonymous namespace
+
+	thread_local std::stringstream Suite::tmpstream;
 	
 	/// Constructs an empty test suite.
 	///
