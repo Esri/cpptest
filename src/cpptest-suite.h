@@ -83,7 +83,7 @@ namespace Test
 
 		void register_test(Func func, const std::string& name);
 		void assertment(Source s);
-		
+
 	private:
 		struct DoRun;
 		struct ExecTests;

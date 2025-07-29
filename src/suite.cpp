@@ -39,6 +39,7 @@
 #include "cpptest-output.h"
 #include "cpptest-source.h"
 #include "cpptest-suite.h"
+#include "cpptest-assert.h"
 
 using namespace std;
 
