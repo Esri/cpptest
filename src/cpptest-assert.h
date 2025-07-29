@@ -139,7 +139,7 @@
 			tmpstream->precision(17);	\
 			*tmpstream << "Got " << (got) << ", expected " << (expected);\
 			assertment(::Test::Source(__FILE__, __LINE__,				\
-						tmpstream->view().data()));						\
+						tmpstream->str().c_str()));						\
 			if (!continue_after_failure()) return;						\
 		}																\
 	}
@@ -169,7 +169,7 @@
 			*tmpstream << #expected << " object not equal to ";		\
 			*tmpstream << #got << " object.";						\
 			assertment(::Test::Source(__FILE__, __LINE__, 			\
-						tmpstream->view().data()));					\
+						tmpstream->str().c_str()));					\
 			if (!continue_after_failure()) return;					\
 		}															\
 	}
@@ -198,7 +198,7 @@
 			*tmpstream << (msg) << ": ";									\
 			*tmpstream << "Got " << (got) << ", expected " << (expected);\
 			assertment(::Test::Source(__FILE__, __LINE__,				\
-						tmpstream->view().data()));						\
+						tmpstream->str().c_str()));						\
 			if (!continue_after_failure()) return;						\
 		}																\
 	}
