@@ -58,7 +58,18 @@ namespace Test
 		
 		void add(std::unique_ptr<Suite> suite);
 		
+		/// Starts the testing. All tests in this suite and embedded suites will
+		/// be executed.
 		bool run(Output& output, bool cont_after_fail = true);
+		
+		/// Starts the testing but only executes tests matching \,p test_name.
+		/// The filter may be either the local test name or a fully qualified
+		/// \c suite::test name.
+		bool run(Output& output, const std::string& test_name, bool cont_after_fail = true);
+		
+		/// Returns true if this suite or any embedded suite contains a test that
+		/// matches \,p test_name using the same rules as the filtered run().
+		bool has_test(const std::string& test_name) const;
 		
 	protected:
 		/// Pointer to a test function.
@@ -83,8 +94,9 @@ namespace Test
 
 		void register_test(Func func, const std::string& name);
 		void assertment(Source s);
-		
+
 	private:
+		struct TestFilter;
 		struct DoRun;
 		struct ExecTests;
 		struct SubSuiteTests;
@@ -120,8 +132,13 @@ namespace Test
 		bool				_continue : 1;	// Continue func after failures
 		
 		void do_run(Output* os, bool cont_after_fail);
+		void do_run(Output* os, bool cont_after_fail, const TestFilter* filter);
+		bool matches_test(const Data& data, const TestFilter* filter) const;
+		int suite_test_count(const TestFilter* filter) const;
 		int total_tests() const;
+		int total_tests(const TestFilter* filter) const;
 		Time total_time(bool recursive) const;
+		Time total_time(bool recursive, const TestFilter* filter) const;
 		
 		void suite_fail();
 
