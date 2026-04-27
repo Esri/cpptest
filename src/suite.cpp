@@ -29,6 +29,7 @@
 #include <cstring>
 #include <functional>
 #include <numeric>
+#include <regex>
 
 #if (defined(__WIN32__) || defined(WIN32))
 # include "winconfig.h"
@@ -49,6 +50,26 @@ namespace Test
 	{
 		std::string _suite_name;
 		std::string _test_name;
+		bool _is_qualified;
+		bool _valid;
+		std::regex _suite_regex;
+		std::regex _test_regex;
+
+		static bool compile_regex(const std::string& pattern, std::regex& compiled)
+		{
+			if (pattern.empty())
+				return true;
+
+			try
+			{
+				compiled = std::regex(pattern);
+				return true;
+			}
+			catch (const std::regex_error&)
+			{
+				return false;
+			}
+		}
 
 		static TestFilter parse(const std::string& test_name)
 		{
@@ -56,13 +77,19 @@ namespace Test
 			std::string::size_type pos = test_name.find("::");
 			if (pos == std::string::npos)
 			{
+				filter._suite_name = test_name;
 				filter._test_name = test_name;
+				filter._is_qualified = false;
 			}
 			else
 			{
 				filter._suite_name = test_name.substr(0, pos);
 				filter._test_name = test_name.substr(pos + 2);
+				filter._is_qualified = true;
 			}
+
+			filter._valid = compile_regex(filter._suite_name, filter._suite_regex)
+				&& compile_regex(filter._test_name, filter._test_regex);
 			return filter;
 		}
 
@@ -73,7 +100,15 @@ namespace Test
 
 		bool matches(const std::string& suite_name, const std::string& test_name) const
 		{
-			return test_name == _test_name && (_suite_name.empty() || suite_name == _suite_name);
+			if (!_valid)
+				return false;
+
+			if (_is_qualified)
+				return std::regex_match(suite_name, _suite_regex)
+					&& std::regex_match(test_name, _test_regex);
+
+			return std::regex_match(suite_name, _suite_regex)
+				|| std::regex_match(test_name, _test_regex);
 		}
 	};
 

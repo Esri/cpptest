@@ -63,8 +63,9 @@ namespace Test
 		bool run(Output& output, bool cont_after_fail = true);
 		
 		/// Starts the testing but only executes tests matching \,p test_name.
-		/// The filter may be either the local test name or a fully qualified
-		/// \c suite::test name.
+		/// The filter may be a suite name, a local test name, or a fully
+		/// qualified \c suite::test name. Each name component also accepts
+		/// a basic regular expression.
 		bool run(Output& output, const std::string& test_name, bool cont_after_fail = true);
 		
 		/// Returns true if this suite or any embedded suite contains a test that
