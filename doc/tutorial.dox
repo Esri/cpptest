@@ -152,6 +152,21 @@ bool run_tests()
 }
 \endcode
 
+The same \c run() API can also target one suite or one specific test case.
+The filter may be a suite name, a local test name, or a fully qualified
+\c suite::test name. Each component also accepts a basic regular expression:
+
+\code
+bool run_single_test()
+{
+	Test::TextOutput output(Test::TextOutput::Verbose);
+	SomeTestSuite sts;
+	return sts.run(output, "SomeTestSuite", false)
+		&& sts.run(output, "SomeTestSuite::test", false)
+		&& sts.run(output, "SomeTestSuite::test_(one|two)", false);
+}
+\endcode
+
 \subsection tutorial_embedded_test_suites Embedded test suites
 
 Test suites may also be added other test suites using Test::Suite::add().
