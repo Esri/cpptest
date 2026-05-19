@@ -55,7 +55,7 @@ namespace Test
 		virtual void test_end(const std::string& name, bool ok,
 							  const Time& time);
 		virtual void assertment(const Source& s);
-		
+
 	protected:
 		struct OutputSuiteInfo;
 		struct OutputTestInfo;
@@ -65,9 +65,9 @@ namespace Test
 		
 		struct TestInfo
 		{
-            std::string _name;
+			std::string _name;
 			Time		_time;
-			
+
 			bool		_success : 1;
 			Sources		_sources;
 			

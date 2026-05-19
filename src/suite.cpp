@@ -29,6 +29,7 @@
 #include <cstring>
 #include <functional>
 #include <numeric>
+#include <regex>
 
 #if (defined(__WIN32__) || defined(WIN32))
 # include "winconfig.h"
@@ -39,11 +40,78 @@
 #include "cpptest-output.h"
 #include "cpptest-source.h"
 #include "cpptest-suite.h"
+#include "cpptest-assert.h"
 
 using namespace std;
 
 namespace Test
 {
+	struct Suite::TestFilter
+	{
+		std::string _suite_name;
+		std::string _test_name;
+		bool _is_qualified;
+		bool _valid;
+		std::regex _suite_regex;
+		std::regex _test_regex;
+
+		static bool compile_regex(const std::string& pattern, std::regex& compiled)
+		{
+			if (pattern.empty())
+				return true;
+
+			try
+			{
+				compiled = std::regex(pattern);
+				return true;
+			}
+			catch (const std::regex_error&)
+			{
+				return false;
+			}
+		}
+
+		static TestFilter parse(const std::string& test_name)
+		{
+			TestFilter filter;
+			std::string::size_type pos = test_name.find("::");
+			if (pos == std::string::npos)
+			{
+				filter._suite_name = test_name;
+				filter._test_name = test_name;
+				filter._is_qualified = false;
+			}
+			else
+			{
+				filter._suite_name = test_name.substr(0, pos);
+				filter._test_name = test_name.substr(pos + 2);
+				filter._is_qualified = true;
+			}
+
+			filter._valid = compile_regex(filter._suite_name, filter._suite_regex)
+				&& compile_regex(filter._test_name, filter._test_regex);
+			return filter;
+		}
+
+		bool enabled() const
+		{
+			return !_test_name.empty();
+		}
+
+		bool matches(const std::string& suite_name, const std::string& test_name) const
+		{
+			if (!_valid)
+				return false;
+
+			if (_is_qualified)
+				return std::regex_match(suite_name, _suite_regex)
+					&& std::regex_match(test_name, _test_regex);
+
+			return std::regex_match(suite_name, _suite_regex)
+				|| std::regex_match(test_name, _test_regex);
+		}
+	};
+
 	namespace
 	{
 		// Destroys all dynamically allocated objects within the given range.
@@ -84,11 +152,28 @@ namespace Test
 	bool
 	Suite::run(Output& output, bool cont_after_fail)
 	{
-		int ntests = total_tests();
+		return run(output, std::string(), cont_after_fail);
+	}
+
+	bool
+	Suite::run(Output& output, const string& test_name, bool cont_after_fail)
+	{
+		const TestFilter filter = TestFilter::parse(test_name);
+		const TestFilter* active_filter = filter.enabled() ? &filter : 0;
+
+		int ntests = total_tests(active_filter);
 		output.initialize(ntests);
-		do_run(&output, cont_after_fail);
-		output.finished(ntests, total_time(true));
+		do_run(&output, cont_after_fail, active_filter);
+		output.finished(ntests, total_time(true, active_filter));
 		return _success;
+	}
+
+	bool
+	Suite::has_test(const string& test_name) const
+	{
+		const TestFilter filter = TestFilter::parse(test_name);
+		const TestFilter* active_filter = filter.enabled() ? &filter : 0;
+		return total_tests(active_filter) > 0;
 	}
 		
 	/// \fn void Suite::setup()
@@ -151,10 +236,21 @@ namespace Test
 	void
 	Suite::assertment(Source s)
 	{
+		std::lock_guard<std::mutex> auto_lock(_mutex);
 		s._suite = _name;
-		s._test  = *_cur_test;
+		if (_cur_test)
+			s._test  = *_cur_test;
+		else
+			s._test = "";
+
 		_output->assertment(s);
 		_result = _success = false;
+	}
+
+	void
+	Suite::suite_fail()
+	{
+		assertment(::Test::Source("", 0, "uncaught exception thrown in suite_setup or suite_tear_down"));
 	}
 	
 	// Functor to execute tests for the given suite.
@@ -162,11 +258,15 @@ namespace Test
 	struct Suite::ExecTests
 	{
 		Suite& _suite;
+		const TestFilter* _filter;
 		
-		ExecTests(Suite& s) : _suite(s) {}
+		ExecTests(Suite& s, const TestFilter* filter = 0) : _suite(s), _filter(filter) {}
 		
 		void operator()(Data& data)
 		{
+			if (!_suite.matches_test(data, _filter))
+				return;
+
 			_suite._cur_test = &data._name;
 			_suite._result = true; // assume success, assert will set to false
 			_suite._output->test_start(data._name);
@@ -174,16 +274,24 @@ namespace Test
 			_suite.setup();
 			Time start(Time::current());
 
+			std::string exception_string;
 			bool exception_caught = false;
 			try
 			{
 				(_suite.*data._func)();
-			} catch (...) {
+			}
+			catch (const std::exception& ex) {
 				exception_caught = true;
+				exception_string = "uncaught std::exception: ";
+				exception_string += ex.what();
+			}
+			catch (...) {
+				exception_caught = true;
+				exception_string = "uncaught exception thrown";
 			}
 
 			if (exception_caught) {
-				_suite.assertment(::Test::Source("", 0, "exception thrown"));
+				_suite.assertment(::Test::Source("", 0, exception_string.c_str()));
 			}
 
 			Time end(Time::current());
@@ -200,9 +308,11 @@ namespace Test
 	{
 		bool	_continue;
 		Output* _output;
+		const TestFilter* _filter;
 		
-		DoRun(Output* output, bool cont) : _continue(cont), _output(output) {}
-		void operator()(Suite* suite) { suite->do_run(_output, _continue); }
+		DoRun(Output* output, bool cont, const TestFilter* filter)
+			: _continue(cont), _output(output), _filter(filter) {}
+		void operator()(Suite* suite) { suite->do_run(_output, _continue, _filter); }
 	};
 
 	// Execute all tests in this and added suites.
@@ -210,14 +320,43 @@ namespace Test
 	void
 	Suite::do_run(Output* os, bool cont_after_fail)
 	{
+		do_run(os, cont_after_fail, 0);
+	}
+
+	void
+	Suite::do_run(Output* os, bool cont_after_fail, const TestFilter* filter)
+	{
 		_continue = cont_after_fail;
 		_output = os;
-		
-		_output->suite_start(_tests.size(), _name);
-		for_each(_tests.begin(), _tests.end(), ExecTests(*this));
-		_output->suite_end(_tests.size(), _name, total_time(false));
+		_success = true;
+		_cur_test = 0;
 
-		for_each(_suites.begin(), _suites.end(), DoRun(_output, _continue));
+		const int suite_tests = suite_test_count(filter);
+
+		if (suite_tests > 0)
+		{
+			bool exception_caught = false;
+			_output->suite_start(suite_tests, _name);
+			try
+			{
+				suite_setup();
+				for_each(_tests.begin(), _tests.end(), ExecTests(*this, filter));
+				suite_tear_down();
+			}
+			catch (...)
+			{
+				exception_caught = true;
+			}
+
+			if (exception_caught) {
+				Data data(&Suite::suite_fail, "Suite Setup/Teardown");
+				ExecTests(*this)(data);
+			}
+
+			_output->suite_end(suite_tests, _name, total_time(false, filter));
+		}
+
+		for_each(_suites.begin(), _suites.end(), DoRun(_output, _continue, filter));
 
 		// FIXME Find a cleaner way
 		Suites::const_iterator iter = _suites.begin();
@@ -230,6 +369,27 @@ namespace Test
 			}
 			iter++;
 		}
+	}
+
+	bool
+	Suite::matches_test(const Data& data, const TestFilter* filter) const
+	{
+		return filter == 0 || filter->matches(_name, data._name);
+	}
+
+	int
+	Suite::suite_test_count(const TestFilter* filter) const
+	{
+		if (filter == 0)
+			return static_cast<int>(_tests.size());
+
+		int count = 0;
+		for (Tests::const_iterator iter = _tests.begin(); iter != _tests.end(); ++iter)
+		{
+			if (matches_test(*iter, filter))
+				++count;
+		}
+		return count;
 	}
 
 	// Functor to count all tests in a suite.
@@ -247,8 +407,18 @@ namespace Test
 	int
 	Suite::total_tests() const
 	{
-		return accumulate(_suites.begin(), _suites.end(),
-						  _tests.size(), SubSuiteTests());
+		return total_tests(0);
+	}
+
+	int
+	Suite::total_tests(const TestFilter* filter) const
+	{
+		int count = suite_test_count(filter);
+		for (Suites::const_iterator iter = _suites.begin(); iter != _suites.end(); ++iter)
+		{
+			count += (*iter)->total_tests(filter);
+		}
+		return count;
 	}
 	
 	// Functor to accumulate execution time for tests.
@@ -277,11 +447,27 @@ namespace Test
 	Time
 	Suite::total_time(bool recursive) const
 	{
-		Time time = accumulate(_tests.begin(), _tests.end(),
-							   Time(), SuiteTime());
+		return total_time(recursive, 0);
+	}
+
+	Time
+	Suite::total_time(bool recursive, const TestFilter* filter) const
+	{
+		Time time;
+		for (Tests::const_iterator iter = _tests.begin(); iter != _tests.end(); ++iter)
+		{
+			if (matches_test(*iter, filter))
+				time = time + iter->_time;
+		}
 		
-		return !recursive ? time : accumulate(_suites.begin(), _suites.end(),
-											  time, SubSuiteTime());
+		if (!recursive)
+			return time;
+
+		for (Suites::const_iterator iter = _suites.begin(); iter != _suites.end(); ++iter)
+		{
+			time = time + (*iter)->total_time(true, filter);
+		}
+		return time;
 	}
 	
 } // namespace Test

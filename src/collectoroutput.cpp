@@ -51,7 +51,8 @@ namespace Test
 	///
 	CollectorOutput::CollectorOutput()
 	:	Output(),
-		_total_errors(0)
+		_total_errors(0),
+		_total_tests(0)
 	{}
 	
 	void
